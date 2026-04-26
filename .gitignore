@@ -1,0 +1,20 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+indices/
+data/pdfs/
+.DS_Store
+
+# Claude Code local config
+.claude/
+
+# Office temp lock files
+~$*
+
+# Course materials (copyrighted)
+From AI Model to AI Agent - Assignment 2.md
+From AI Model to AI Agent - Assignment 2.pdf
+Week3_RAG_AI_Systems_Updated.pdf
