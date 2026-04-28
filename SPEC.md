@@ -124,7 +124,8 @@ Three independent measures. Each isolates a different failure mode.
 ### 5.3 Retrieval page-hit@k (full dataset)
 
 - For each question, retrieve top-`k` chunks and record `page_hit@k = 1` if **any** retrieved chunk's `page_number` matches **any** entry in the question's `evidence_page_num` list; else `0`.
-- Report `k ∈ {1, 3, 5}`.
+- Report `k ∈ {1, 3, 5}` for the Task 6 eval xlsx (single experiment, no k sweep).
+- Report **one column per tested k** for the Task 7 cycles xlsx; since E1 sweeps `k ∈ {1, 3, 5, 8}`, every cycles row carries `page_hit_at_1`, `page_hit_at_3`, `page_hit_at_5`, `page_hit_at_8`. All four are computed from a single top-8 retrieval per question (deterministic FAISS, so slicing gives exact lower-k results).
 - Multi-evidence questions count as a hit on any match (union semantics).
 
 ### 5.4 Baseline numbers
@@ -172,7 +173,7 @@ Every filename below is grading-sensitive. Do not rename.
 | `assignment2_naive_generation.xlsx` | `artifacts/` | `financebench_id`, `question_type`, `question`, `naive_answer`, `ground_truth`, `verdict ∈ {correct, partially correct, wrong, refused}` |
 | `assignment2_run_and_compare.xlsx` | `artifacts/` | `financebench_id`, `question_type`, `question`, `naive_answer`, `RAG_answer`, `ground_truth` |
 | `assignment2_evaluation.xlsx` | `artifacts/` | `financebench_id`, `question`, `correctness`, `faithfulness`, `page_hit_at_1`, `page_hit_at_3`, `page_hit_at_5` |
-| `assignment2_improvement_cycles.xlsx` | `artifacts/` | `experiment`, `change`, `correctness`, `faithfulness`, `page_hit_at_1`, `page_hit_at_3`, `page_hit_at_5`. Row 1 = Task 6 baseline. |
+| `assignment2_improvement_cycles.xlsx` | `artifacts/` | `experiment`, `change`, `correctness`, `faithfulness`, `page_hit_at_1`, `page_hit_at_3`, `page_hit_at_5`, `page_hit_at_8` (one page-hit column per tested k from E1's sweep). Row 1 = Task 6 baseline. |
 | Notebook | `notebooks/financebench_rag.ipynb` | Code and markdown for all tasks, outputs present. |
 | Markdown discussions | inside the notebook | One per task where the brief asks for it (Tasks 1, 2, 3, 5, 7, Bonus). |
 | Headline metrics table | `README.md` §3 | Baseline vs best experiment on all three axes. |
