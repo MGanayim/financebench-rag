@@ -16,11 +16,11 @@ Baseline is a standard dense-retrieval RAG pipeline (k=4, chunk_size=1000, no re
 
 | Configuration | Correctness | Faithfulness (n=20) | page-hit@1 | page-hit@3 | page-hit@5 |
 | --- | :---: | :---: | :---: | :---: | :---: |
-| Naive generation (no retrieval) | TBD | - | - | - | - |
-| RAG baseline | TBD | TBD | TBD | TBD | TBD |
-| Best experiment | TBD | TBD | TBD | TBD | TBD |
+| Naive generation (no retrieval, n=10 manual) | 0.20 | - | - | - | - |
+| RAG baseline (k=4, chunk_size=1000, no reranker) | 0.28 | 0.79 | 0.20 | 0.33 | 0.40 |
+| Best experiment (E1, k=8) | **0.34** | 0.75 | 0.20 | 0.33 | 0.40 |
 
-*Numbers populate after the notebook's Task 6 and Task 7 runs complete. The raw per-question data lives in `artifacts/assignment2_evaluation.xlsx` and `artifacts/assignment2_improvement_cycles.xlsx`.*
+*Naive generation correctness counts only `verdict == "correct"` (2 of 10) - the other 8 split as 6 refused, 1 partially correct, 1 wrong. Best experiment is E1 at k=8 (more retrieved chunks fed to the generator); the retriever and index are unchanged from baseline so page-hit columns match. Per-question data lives in `artifacts/assignment2_evaluation.xlsx` and `artifacts/assignment2_improvement_cycles.xlsx`.*
 
 ---
 
@@ -73,7 +73,7 @@ Three axes, chosen because they fail independently. A single correctness number 
 
 | Axis | What it measures | Why it's here |
 | --- | --- | --- |
-| **Correctness** | Does the final answer match ground truth? Binary verdict from DeepSeek-V3-0324. | End-to-end quality - what a user actually feels. |
+| **Correctness** | Does the final answer match ground truth? Binary verdict from DeepSeek-V3.2. | End-to-end quality - what a user actually feels. |
 | **Faithfulness** | Does the answer stay within the retrieved context? Ragas `Faithfulness`. | Catches hallucination even when the answer looks right. Evaluated on a fixed 20-row sample (Ragas is slow). |
 | **Retrieval page-hit@k** | Did retrieval surface the page cited as evidence, for `k ∈ {1,3,5}`? | Isolates retrieval. If page-hit is low, no amount of prompt engineering will save you. |
 
@@ -85,15 +85,17 @@ See [SPEC.md §5](SPEC.md#5-evaluation-contract) for the exact protocol, includi
 
 Task 7 runs at least three one-variable-at-a-time experiments against the Task 6 baseline. Each varies exactly one of: `k`, chunk size, reranker, generation prompt, or generation model.
 
+All deltas are vs the RAG baseline (correctness 0.28, faithfulness 0.79, page-hit@5 0.40). Each experiment row reports the best variant; full per-variant numbers live in `artifacts/assignment2_improvement_cycles.xlsx`.
+
 | Experiment | Change | Correctness Δ | Faithfulness Δ | page-hit@5 Δ |
 | --- | --- | :---: | :---: | :---: |
-| E1 - k sweep | k ∈ {1, 3, 5, 8} | TBD | TBD | TBD |
-| E2 - chunk size | 300 / 1000 / 2000 | TBD | TBD | TBD |
-| E3 - reranker | + `bge-reranker-base` (20 → 4) | TBD | TBD | TBD |
+| E1 - k sweep (best: k=8) | k ∈ {1, 3, 5, 8} | **+0.06** | -0.04 | 0.00 |
+| E2 - chunk size (best: 2000) | 300 / 1000 / 2000 | -0.01 | -0.04 | -0.06 |
+| E3 - reranker | + `bge-reranker-base` (20 → 4) | +0.03 | -0.10 | -0.10 |
 
-Numbers and the "where does the pipeline fail most?" wrap-up are written into the notebook's Task 7 section after the run. A short summary of which axis dominated the gain - retrieval vs generation - goes here once the data is in.
+**Where does the pipeline fail most?** Retrieval is the binding constraint: baseline page-hit@5 is 0.40, so 60 of 100 questions have no path to a correct answer at k=5. E1's monotonic correctness gain (k=1: 0.15 → k=8: 0.34) shows the generator does extract better answers when given more context, but at k=8 correctness still lands at 0.34 against a hit@8 ceiling of 0.45 - leaving ~11 questions where the right page was retrieved but the system answered wrong. Both axes have headroom; retrieval sets the harder upper bound. The E3 paradox (page-hit dropped, correctness rose) also exposes a measurement gap: 10-Ks repeat the same numbers across summary tables and footnotes, so a chunk pulled from a non-labeled page can still answer correctly even though page-hit scores it as a miss.
 
-**Bonus - multi-scale chunking:** a separate study comparing `page_hit@5` at chunk sizes {300, 1000, 2000}, reporting the disagreement rate (fraction of questions where the best chunk size differs from the overall winner). Tests the claim that no single chunk size is optimal for all queries.
+**Bonus - multi-scale chunking:** chunk_size=1000 wins on `page_hit@5` (0.40 vs 0.35 for 300 and 0.34 for 2000). Of 53 "covered" questions (at least one chunk size hit), 13 have a per-question best chunk size that differs from the overall winner - **disagreement rate 13/53 = 0.245**. Dominant on average but partly query-dependent; full discussion in the notebook's bonus section.
 
 ---
 
@@ -124,7 +126,7 @@ Ordered by expected impact on the axes that currently hurt most:
 ## Credits
 
 - **Dataset:** [FinanceBench: A New Benchmark for Financial Question Answering](https://arxiv.org/abs/2311.11944) - Islam et al., Patronus AI.
-- **Models:** `meta-llama/Llama-3.3-70B-Instruct` and `deepseek-ai/DeepSeek-V3-0324` served via [Nebius Token Factory](https://nebius.ai/).
+- **Models:** `meta-llama/Llama-3.3-70B-Instruct` and `deepseek-ai/DeepSeek-V3.2` served via [Nebius Token Factory](https://nebius.ai/).
 - **Libraries:** [LangChain](https://www.langchain.com/), [FAISS](https://github.com/facebookresearch/faiss), [Ragas](https://docs.ragas.io/), [Hugging Face](https://huggingface.co/) (`BAAI/bge-small-en-v1.5`, `BAAI/bge-reranker-base`).
 - Originally built as coursework for the **Nebius Academy - From AI Model to AI Agent** course.
 
