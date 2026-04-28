@@ -105,19 +105,20 @@ def answer_with_rag(query: str, k: int = 4) -> dict:
 
 Three independent measures. Each isolates a different failure mode.
 
-### 5.1 Correctness (full dataset)
+### 5.1 Correctness (full dataset, automated)
 
-- **Judge model.** `deepseek-ai/DeepSeek-V3-0324` via Nebius Token Factory - a different model family from the generator, to avoid self-preference bias.
+- **Judge model.** `deepseek-ai/DeepSeek-V3.2` via Nebius Token Factory - a different model family from the generator, to avoid self-preference bias. (DeepSeek-V3-0324 was removed from Token Factory; V3.2 is the replacement.)
 - **Prompt.** Produces a binary verdict (`correct` / `incorrect`) plus a one-sentence justification.
 - **Output column.** `correctness ∈ {0, 1}`.
 - **Aggregation.** Mean across the full filtered dataset.
+- **Automation note.** This is fully automated, not manual. Task 1 / Task 5 used manual judgment because the brief explicitly required it; Task 6 explicitly requires an LLM-as-judge with code, and only the final aggregate score is reported (not per-row review).
 
-### 5.2 Faithfulness (20-row subsample)
+### 5.2 Faithfulness (20-row subsample, automated)
 
-- **Library.** [Ragas](https://docs.ragas.io/) `Faithfulness` from the collections API.
-- **LLM wiring.** `ragas.llms.llm_factory(...)` wrapping `AsyncOpenAI(base_url=<Nebius base URL>, api_key=...)` pointed at DeepSeek-V3-0324.
-- **Method.** Use `.score()` (sync). Do **not** use `.ascore()`.
-- **Sample.** First 20 rows sorted by `financebench_id`. Ragas is slow (multiple LLM calls per sample); 20 is the fixed cap across all experiments so faithfulness numbers remain comparable.
+- **Library.** [Ragas](https://docs.ragas.io/) `Faithfulness` imported from `ragas.metrics`. The v1.0 `ragas.metrics.collections` class drops `.single_turn_score`, breaking the documented fallback; stay on the legacy import until the assignment-required call signature aligns with the collections API.
+- **LLM wiring.** `ragas.llms.llm_factory(...)` wrapping a **sync** `OpenAI(base_url=<Nebius base URL>, api_key=...)` client pointed at `deepseek-ai/DeepSeek-V3.2`. Do **not** use `AsyncOpenAI` - the brief mandates the sync method.
+- **Method.** Call `.score(...)` per row. If `.score(...)` is not exposed on the metric instance in the installed Ragas version, fall back to `.single_turn_score(...)`. Do **not** use `.ascore()`.
+- **Sample.** First 20 rows sorted by `financebench_id`. Ragas is token-heavy (multiple LLM calls per sample); 20 is the fixed cap across all experiments so faithfulness numbers remain comparable. The cap is a token-cost decision, not a manual-review decision - only the final mean is reported.
 - **Output column.** `faithfulness ∈ [0, 1]`.
 
 ### 5.3 Retrieval page-hit@k (full dataset)
@@ -192,7 +193,7 @@ Every filename below is grading-sensitive. Do not rename.
 
 These have bitten every prior run - the notebook should handle them explicitly, not defensively hope they don't happen.
 
-1. **Ragas + Nebius wiring.** Faithfulness scoring fails silently if the Ragas LLM is not wrapped correctly. Use `ragas.llms.llm_factory(...)` over an `AsyncOpenAI(base_url=<Nebius URL>, api_key=...)` client; verify with a single-row smoke test before running the 20-row batch.
+1. **Ragas + Nebius wiring.** Faithfulness scoring fails silently if the Ragas LLM is not wrapped correctly. Use `ragas.llms.llm_factory(...)` over a **sync** `OpenAI(base_url=<Nebius URL>, api_key=...)` client (not `AsyncOpenAI` - the brief mandates the sync method); verify with a single-row smoke test before running the 20-row batch. If `.score(...)` is not on the metric, fall back to `.single_turn_score(...)`.
 2. **0-indexed pages.** `evidence_page_num` is 0-indexed. `PyPDFLoader` attaches its own `page` metadata field - we ignore it and write our own `page_number` to be explicit. An off-by-one here drops `page_hit@k` to near zero without any visible error.
 3. **Metrics-generated questions.** Must be dropped before indexing, evaluation, and experiments. Leaving them in inflates the denominator and distorts every metric.
 4. **BGE model download.** First run downloads ~130 MB; later runs hit the HF cache. Slow networks should warm the cache before the notebook runs end-to-end.
