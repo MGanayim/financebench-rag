@@ -174,7 +174,7 @@ Every filename below is grading-sensitive. Do not rename.
 | `assignment2_run_and_compare.xlsx` | `artifacts/` | `financebench_id`, `question_type`, `question`, `naive_answer`, `RAG_answer`, `ground_truth` |
 | `assignment2_evaluation.xlsx` | `artifacts/` | `financebench_id`, `question`, `correctness`, `faithfulness`, `page_hit_at_1`, `page_hit_at_3`, `page_hit_at_5` |
 | `assignment2_improvement_cycles.xlsx` | `artifacts/` | `experiment`, `change`, `correctness`, `faithfulness`, `page_hit_at_1`, `page_hit_at_3`, `page_hit_at_5`, `page_hit_at_8` (one page-hit column per tested k from E1's sweep). Row 1 = Task 6 baseline. |
-| Notebook | `notebooks/financebench_rag.ipynb` | Code and markdown for all tasks, outputs present. |
+| Notebook | `financebench_rag.ipynb` (repo root) | Code and markdown for all tasks, outputs present. |
 | Markdown discussions | inside the notebook | One per task where the brief asks for it (Tasks 1, 2, 3, 5, 7, Bonus). |
 | Headline metrics table | `README.md` §3 | Baseline vs best experiment on all three axes. |
 
