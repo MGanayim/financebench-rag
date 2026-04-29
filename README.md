@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Stack](https://img.shields.io/badge/stack-Nebius%20%C2%B7%20LangChain%20%C2%B7%20FAISS%20%C2%B7%20Ragas-purple)](#architecture)
+[![Stack](https://img.shields.io/badge/stack-Llama--3.3%20%C2%B7%20BGE%20%C2%B7%20FAISS%20%C2%B7%20Ragas-purple)](#architecture)
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/MGanayim/financebench-rag/blob/main/financebench_rag.ipynb)
 
 Most RAG demos report a single accuracy number and stop. This repo takes the opposite approach: a baseline pipeline, three independent evaluation axes, and a set of one-variable-at-a-time experiments designed to tell you *which component* is actually costing you accuracy. The benchmark is [FinanceBench](https://arxiv.org/abs/2311.11944) - SEC 10-K question answering, adversarial by design.
